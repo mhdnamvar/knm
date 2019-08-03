@@ -14,21 +14,31 @@ class DeckTableViewController: UITableViewController {
     let cellId = "cellId"
     let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
     var activityIndicator = UIActivityIndicatorView()
+    let DATA_EXISTS = "dataExists"
+    let DATA_UPDATED = "dataUpdated"
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
-        
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Update", style: .plain, target: self, action: #selector(updateCards))
-         navigationItem.rightBarButtonItem?.isEnabled = false
-//        updateCards()
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)        
+//        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Delete", style: .plain, target: self, action: #selector(deleteCards))
+//        navigationItem.rightBarButtonItem?.isEnabled = false
+        checkData()
         
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         setLargeTitle()
+    }
+    
+    func checkData(){
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: DATA_EXISTS) {
+            updateCards()
+            defaults.set(true, forKey: DATA_EXISTS)
+            defaults.set(Date(), forKey: DATA_UPDATED)
+        }
     }
 
     func setLargeTitle(){
@@ -42,19 +52,22 @@ class DeckTableViewController: UITableViewController {
     @objc func updateCards() -> Void {
         activityIndicator.startAnimating()
         UIApplication.shared.isNetworkActivityIndicatorVisible = true
-//        deleteCards()
+        deleteCards()
         fetchCards()
         activityIndicator.stopAnimating()
         UIApplication.shared.isNetworkActivityIndicatorVisible = false
     }
     
-    func deleteCards(){
+    @objc func deleteCards(){
         let request: NSFetchRequest<FlashCards> = FlashCards.fetchRequest()
         do {
             let cards = try FlashCardsService.context.fetch(request)
             for card in cards {
                 FlashCardsService.context.delete(card)
             }
+             let defaults = UserDefaults.standard
+            defaults.set(false, forKey: DATA_EXISTS)
+            defaults.set(Date(), forKey: DATA_UPDATED)
         } catch let err {
             print(err.localizedDescription)
         }
@@ -74,12 +87,12 @@ class DeckTableViewController: UITableViewController {
             do {
                 let registerResponse = try JSONDecoder().decode([GetFlashCardResponse].self, from: data)
                 for card in registerResponse {
-//                    print(card.id, card.name, card.category)
+                    print(card.id, card.name, card.category)
                     let flashCard = FlashCards(context: FlashCardsService.context)
                     flashCard.category = Category.from(text: card.category).rawValue
                     flashCard.question = card.name
                     flashCard.answer = card.description
-                    FlashCardsService.saveContext()
+//                    FlashCardsService.saveContext()
                 }
             } catch let err {
                 print(err)
