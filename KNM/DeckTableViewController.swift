@@ -32,7 +32,7 @@ class DeckTableViewController: UITableViewController {
         setLargeTitle()
     }
     
-    func checkData(){
+    func checkData() {
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: DATA_EXISTS) {
             updateCards()
@@ -92,11 +92,11 @@ class DeckTableViewController: UITableViewController {
                     flashCard.category = Category.from(text: card.category).rawValue
                     flashCard.question = card.name
                     flashCard.answer = card.description
-//                    FlashCardsService.saveContext()
                 }
             } catch let err {
                 print(err)
             }
+            FlashCardsService.saveContext()
         }).resume()
     }
     
